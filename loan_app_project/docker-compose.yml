@@ -14,6 +14,8 @@ services:
       - PG_PORT=5432
     depends_on:
       - db
+      - redis
+      - celery
   db:
     container_name: db
     image: postgres:12
@@ -25,6 +27,28 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+  celery:
+    build: .
+    environment:
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - PG_DB=postgres
+      - PG_HOST=db
+      - PG_PORT=5432
+    command: celery -A loan_app_project worker --loglevel=info
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
 
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
 volumes:
   pgdata: {}
+  redisdata: {}
